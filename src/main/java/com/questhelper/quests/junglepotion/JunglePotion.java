@@ -25,26 +25,26 @@
 package com.questhelper.quests.junglepotion;
 
 import com.questhelper.ItemCollections;
+import com.questhelper.PanelDetail;
 import com.questhelper.QuestDescriptor;
 import com.questhelper.QuestHelperQuest;
+import com.questhelper.Step;
 import com.questhelper.Zone;
 import com.questhelper.panel.PanelDetails;
-import com.questhelper.questhelpers.BasicQuestHelper;
+import com.questhelper.questhelpers.AnnotationQuestHelper;
 import com.questhelper.requirements.ItemRequirement;
 import com.questhelper.requirements.Requirement;
+import com.questhelper.requirements.conditional.ItemRequirementCondition;
+import com.questhelper.requirements.conditional.ZoneCondition;
 import com.questhelper.steps.ConditionalStep;
 import com.questhelper.steps.DetailedQuestStep;
 import com.questhelper.steps.NpcStep;
 import com.questhelper.steps.ObjectStep;
 import com.questhelper.steps.QuestStep;
-import com.questhelper.requirements.conditional.ItemRequirementCondition;
-import com.questhelper.requirements.conditional.ZoneCondition;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import net.runelite.api.ItemID;
 import net.runelite.api.NpcID;
 import net.runelite.api.ObjectID;
@@ -53,27 +53,63 @@ import net.runelite.api.coords.WorldPoint;
 @QuestDescriptor(
 	quest = QuestHelperQuest.JUNGLE_POTION
 )
-public class JunglePotion extends BasicQuestHelper
+public class JunglePotion extends AnnotationQuestHelper
 {
 	//Items Required
 	ItemRequirement grimySnakeWeed, snakeWeed, grimyArdrigal, ardrigal, grimySitoFoil, sitoFoil, grimyVolenciaMoss, volenciaMoss,
 		roguesPurse, grimyRoguesPurse;
 
-	QuestStep startQuest, finishQuest;
+	ObjectStep getRoguePurseHerb;
 
-	ObjectStep getSnakeWeed, getArdrigal, getSitoFoil, getVolenciaMoss, enterCave, getRoguePurseHerb;
+	@Step(pos = 0)
+	@PanelDetail(title = START_TITLE, position = 0)
+	QuestStep startQuest;
 
-	ConditionalStep cleanAndReturnSnakeWeed, cleanAndReturnArdrigal, cleanAndReturnSitoFoil, cleanAndReturnVolenciaMoss,
-		getRoguesPurse, cleanAndReturnRoguesPurse;
+	@Step(pos = 1)
+	ObjectStep getSnakeWeed;
+
+	@Step(pos = 2)
+	ConditionalStep cleanAndReturnSnakeWeed;
+
+	@Step(pos = 3)
+	ObjectStep getArdrigal;
+
+	@Step(pos = 4)
+	ConditionalStep cleanAndReturnArdrigal;
+
+	@Step(pos = 5)
+	ObjectStep getSitoFoil;
+
+	@Step(pos = 6)
+	ConditionalStep cleanAndReturnSitoFoil;
+
+	@Step(pos = 7)
+	ObjectStep getVolenciaMoss;
+
+	@Step(pos = 8)
+	ConditionalStep cleanAndReturnVolenciaMoss;
+
+	@Step(pos = 9)
+	ConditionalStep getRoguesPurse;
+
+	@Step(pos = 10)
+	ConditionalStep cleanAndReturnRoguesPurse;
+
+	@Step(pos = 11)
+	QuestStep finishQuest;
+
+	ObjectStep enterCave;
 
 	ZoneCondition isUnderground;
 
+	private static final String START_TITLE = "Starting quest";
+
 	@Override
-	public Map<Integer, QuestStep> loadSteps()
+	public void setupSteps()
 	{
 		setupItemRequirements();
 		setupZones();
-		return getSteps();
+		createSteps();
 	}
 
 	private void setupItemRequirements()
@@ -107,52 +143,36 @@ public class JunglePotion extends BasicQuestHelper
 		isUnderground = new ZoneCondition(undergroundZone);
 	}
 
-	private Map<Integer, QuestStep> getSteps()
-	{
-		Map<Integer, QuestStep> steps = new HashMap<>();
-
-		steps.put(0, startQuestStep());
-		steps.put(1, getSnakeWeed());
-		steps.put(2, returnSnakeWeed());
-		steps.put(3, getArdrigal());
-		steps.put(4, returnArdigal());
-		steps.put(5, getSitoFoil());
-		steps.put(6, returnSitoFoil());
-		steps.put(7, getVolenciaMoss());
-		steps.put(8, returnVolenciaMoss());
-		steps.put(9, getRoguesPurse());
-		steps.put(10, returnRoguesPurse());
-		steps.put(11, finishQuestStep());
-		return steps;
-	}
-
-	private QuestStep startQuestStep()
+	private void createSteps()
 	{
 		startQuest = talkToTrufitus("Talk to Trufitus in Tai Bwo Wannai on Karamja.");
 		startQuest.addDialogSteps("It's a nice village, where is everyone?");
 		startQuest.addDialogSteps("Me? How can I help?");
 		startQuest.addDialogSteps("It sounds like just the challenge for me.");
-		return startQuest;
-	}
 
-	private QuestStep returnArdigal()
-	{
-		return cleanAndReturnArdrigal = getReturnHerbStep("Ardrigal", grimyArdrigal, ardrigal);
-	}
+		getSnakeWeed = new ObjectStep(this, ObjectID.MARSHY_JUNGLE_VINE, new WorldPoint(2763, 3044, 0),
+			"Search a marshy jungle vine south of Tai Bwo Wannai for some snake weed.");
+		getSnakeWeed.addText("If you want to do Zogre Flesh Eaters or Legends' Quest grab one for each as you will need them later.");
+		cleanAndReturnSnakeWeed = getReturnHerbStep("Snake Weed", grimySnakeWeed, snakeWeed);
 
-	private QuestStep returnSnakeWeed()
-	{
-		return cleanAndReturnSnakeWeed = getReturnHerbStep("Snake Weed", grimySnakeWeed, snakeWeed);
-	}
+		getArdrigal = new ObjectStep(this, ObjectID.PALM_TREE_2577, new WorldPoint(2871, 3116, 0),
+			"Search the palm trees north east of Tai Bwo Wannai for an Ardrigal herb.");
+		getArdrigal.addText("If you want to do Zogre Flesh Eaters or Legends' Quest grab one for each as you will need them later.");
+		cleanAndReturnArdrigal = getReturnHerbStep("Ardrigal", grimyArdrigal, ardrigal);
 
-	private QuestStep returnSitoFoil()
-	{
-		return cleanAndReturnSitoFoil = getReturnHerbStep("Sito Foil", grimySitoFoil, sitoFoil);
-	}
+		getSitoFoil = new ObjectStep(this, ObjectID.SCORCHED_EARTH, new WorldPoint(2791, 3047, 0),
+			"Search the scorched earth in the south of Tai Bwo Wannai for a Sito Foil herb.");
+		cleanAndReturnSitoFoil = getReturnHerbStep("Sito Foil", grimySitoFoil, sitoFoil);
 
-	private QuestStep returnVolenciaMoss()
-	{
-		return cleanAndReturnVolenciaMoss = getReturnHerbStep("Volencia Moss", grimyVolenciaMoss, volenciaMoss);
+		getVolenciaMoss = new ObjectStep(this, ObjectID.ROCK_2581, new WorldPoint(2851, 3036, 0),
+			"Search the rock for a Volencia Moss herb at the mine south east of Tai Bwo Wannai.");
+		getVolenciaMoss.addText("If you plan on doing Fairy Tail I then take an extra.");
+		cleanAndReturnVolenciaMoss = getReturnHerbStep("Volencia Moss", grimyVolenciaMoss, volenciaMoss);
+
+		getRoguesPurse();
+		returnRoguesPurse();
+
+		finishQuest = talkToTrufitus("Talk to Trufitus to finish the quest.");
 	}
 
 	private QuestStep returnRoguesPurse()
@@ -173,36 +193,6 @@ public class JunglePotion extends BasicQuestHelper
 		return cleanAndReturnHerb;
 	}
 
-	private QuestStep getSnakeWeed()
-	{
-		getSnakeWeed = new ObjectStep(this, ObjectID.MARSHY_JUNGLE_VINE, new WorldPoint(2763, 3044, 0),
-			"Search a marshy jungle vine south of Tai Bwo Wannai for some snake weed.");
-		getSnakeWeed.addText("If you want to do Zogre Flesh Eaters or Legends' Quest grab one for each as you will need them later.");
-		return getSnakeWeed;
-	}
-
-	private QuestStep getArdrigal()
-	{
-		getArdrigal = new ObjectStep(this, ObjectID.PALM_TREE_2577, new WorldPoint(2871, 3116, 0),
-			"Search the palm trees north east of Tai Bwo Wannai for an Ardrigal herb.");
-		getArdrigal.addText("If you want to do Zogre Flesh Eaters or Legends' Quest grab one for each as you will need them later.");
-		return getArdrigal;
-	}
-
-	private QuestStep getSitoFoil()
-	{
-		return getSitoFoil = new ObjectStep(this, ObjectID.SCORCHED_EARTH, new WorldPoint(2791, 3047, 0),
-			"Search the scorched earth in the south of Tai Bwo Wannai for a Sito Foil herb.");
-	}
-
-	private QuestStep getVolenciaMoss()
-	{
-		getVolenciaMoss = new ObjectStep(this, ObjectID.ROCK_2581, new WorldPoint(2851, 3036, 0),
-			"Search the rock for a Volencia Moss herb at the mine south east of Tai Bwo Wannai.");
-		getVolenciaMoss.addText("If you plan on doing Fairy Tail I then take an extra.");
-		return getVolenciaMoss;
-	}
-
 	private QuestStep getRoguesPurse()
 	{
 		enterCave = new ObjectStep(this, ObjectID.ROCKS_2584, new WorldPoint(2825, 3119, 0),
@@ -216,12 +206,6 @@ public class JunglePotion extends BasicQuestHelper
 
 		getRoguesPurse.addSubSteps(enterCave);
 		return getRoguesPurse;
-	}
-
-	private QuestStep finishQuestStep()
-	{
-		finishQuest = talkToTrufitus("Talk to Trufitus to finish the quest.");
-		return finishQuest;
 	}
 
 	private NpcStep talkToTrufitus(String text, Requirement... requirements)
@@ -255,7 +239,7 @@ public class JunglePotion extends BasicQuestHelper
 	{
 		List<PanelDetails> steps = new ArrayList<>();
 
-		PanelDetails startingPanel = new PanelDetails("Starting quest",
+		PanelDetails startingPanel = new PanelDetails(START_TITLE,
 			Collections.singletonList(startQuest));
 		steps.add(startingPanel);
 
